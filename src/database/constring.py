@@ -6,7 +6,7 @@ stored connection strings ini akan di simpan encrypted.
 
 from enum import StrEnum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 
 class AuthEnum(StrEnum):
@@ -20,8 +20,8 @@ class Constring(BaseModel):
     server: str
     database: str
     auth: AuthEnum
-    username: str | None = None
-    password: str | None = None
+    username: SecretStr | None = None
+    password: SecretStr | None = None
     encrypted: bool | None = Field(
         default=False, description="If True, the connection string is encrypted."
     )
