@@ -60,3 +60,7 @@ user_info.json
 *.instructions.md
 *.prompt.md
 *.chatmode.md
+
+# schematesis and hyphotesis
+.hyphotesis
+.schemata
