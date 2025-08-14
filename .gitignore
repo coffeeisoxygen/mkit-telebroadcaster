@@ -61,6 +61,6 @@ user_info.json
 *.prompt.md
 *.chatmode.md
 
-# schematesis and hyphotesis
-.hyphotesis
+# schemathesis and hypothesis
+.hypothesis
 .schemata
