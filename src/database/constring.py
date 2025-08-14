@@ -4,30 +4,49 @@ ini adalah connection string builder yang akan secara runtime di input oleh user
 stored connection strings ini akan di simpan encrypted.
 """
 
-from typing import Optional
+from enum import StrEnum
+
+from pydantic import BaseModel, Field
 
 
-def build_constring(
-    server: str,
-    database: str,
-    use_windows_auth: bool,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
-) -> str:
-    """
-    Build a SQL Server connection string for either Windows or SQL Authentication.
+class AuthEnum(StrEnum):
+    WINDOWS = "Windows"
+    SQL = "SQL"
+
+
+class Constring(BaseModel):
+    model_config = {"from_attributes": True, "str_strip_whitespace": True}
+
+    server: str
+    database: str
+    auth: AuthEnum
+    username: str | None = None
+    password: str | None = None
+    encrypted: bool | None = Field(
+        default=False, description="If True, the connection string is encrypted."
+    )
+    trusted: bool | None = Field(
+        default=False, description="If True, Windows Authentication is used."
+    )
+    driver: str = Field(
+        default="ODBC Driver 17 for SQL Server", description="The ODBC driver to use."
+    )
+
+
+def build_constring(con: Constring) -> str:
+    """Build a SQL Server connection string from a Constring model.
+
     Args:
-            server (str): SQL Server address
-            database (str): Database name
-            use_windows_auth (bool): True for Windows Auth, False for SQL Auth
-            username (str, optional): SQL username (required for SQL Auth)
-            password (str, optional): SQL password (required for SQL Auth)
+        con (Constring): Connection string model
     Returns:
-            str: Connection string
+        str: Connection string
     """
-    if use_windows_auth:
-        return f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};Trusted_Connection=yes;"
-    else:
-        if not username or not password:
+    driver = con.driver or "ODBC Driver 17 for SQL Server"
+    if con.auth == AuthEnum.WINDOWS or con.trusted:
+        return f"DRIVER={{{driver}}};SERVER={con.server};DATABASE={con.database};Trusted_Connection=yes;"
+    elif con.auth == AuthEnum.SQL:
+        if not con.username or not con.password:
             raise ValueError("Username and password required for SQL Authentication.")
-        return f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password};"
+        return f"DRIVER={{{driver}}};SERVER={con.server};DATABASE={con.database};UID={con.username};PWD={con.password};"
+    else:
+        raise ValueError("Invalid authentication type.")
